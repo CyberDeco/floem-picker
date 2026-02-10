@@ -1,4 +1,4 @@
-//! Checkerboard background renderer for alpha-related surfaces.
+//! Checkerboard background renderer for alpha slider.
 
 use floem::context::PaintCx;
 use floem::kurbo::Rect;
@@ -15,7 +15,7 @@ pub(crate) fn paint_checkerboard(cx: &mut PaintCx, rect: Rect) {
     let cell = constants::CHECKER_CELL;
     // Fill with light first
     cx.fill(&rect, LIGHT, 0.0);
-    // Draw dark cells
+    // Then draw dark cells
     let cols = (rect.width() / cell).ceil() as usize;
     let rows = (rect.height() / cell).ceil() as usize;
     for row in 0..rows {

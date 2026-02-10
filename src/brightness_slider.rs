@@ -1,8 +1,7 @@
 //! Brightness slider (0.0–1.0).
 //!
-//! Renders a horizontal gradient from the current color at full brightness
-//! (left) to black (right) as a rasterized image, avoiding vger's broken
-//! linear gradient coordinate handling.
+//! Horizontal gradient from current color at full brightness
+//! (left) to black (right) as a rasterized image.
 
 use std::sync::Arc;
 
@@ -21,7 +20,7 @@ use floem_renderer::Renderer;
 use crate::constants;
 use crate::math;
 
-/// Rasterize a horizontal gradient: `(r, g, b)` on the left → black on the right.
+/// Rasterize horizontal gradient: `(r, g, b)` on the left -> black on the right.
 fn rasterize_brightness_gradient(width: u32, height: u32, r: f64, g: f64, b: f64) -> Vec<u8> {
     let mut buf = vec![0u8; (width * height * 4) as usize];
     for px in 0..width {
@@ -220,11 +219,11 @@ impl View for BrightnessSlider {
         let rect = Rect::new(0.0, 0.0, w, h);
         let rrect = rect.to_rounded_rect(constants::THUMB_RADIUS);
 
-        // Clip to rounded rect for rounded ends
+        // Rounded ends on sliders
         cx.save();
         cx.clip(&rrect);
 
-        // Full-brightness color (left) → black (right) as an image
+        // Full-brightness color (left) -> black (right) as raster
         let scale = cx.scale();
         self.ensure_gradient_image(scale);
         if let Some(ref img) = self.grad_img {
@@ -246,7 +245,7 @@ impl View for BrightnessSlider {
             &floem::kurbo::Stroke::new(1.0),
         );
 
-        // Thumb (circular ring; left = 1.0, right = 0.0)
+        // Ring thumbs
         let radius = constants::THUMB_RADIUS;
         let thumb_x = radius + (1.0 - self.brightness) * (w - 2.0 * radius);
         let thumb_cy = h / 2.0;

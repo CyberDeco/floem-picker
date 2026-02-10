@@ -1,9 +1,8 @@
 //! macOS native eyedropper (screen color sampler) integration.
 //!
-//! Uses `NSColorSampler` via Objective-C FFI to invoke the system-wide
-//! screen color picker. The sampler runs asynchronously — macOS shows a
-//! magnifying-glass overlay, the user clicks a pixel, and the callback
-//! fires with the sampled color.
+//! Uses `NSColorSampler` via Objective-C FFI to call the system
+//! screen color picker (asynchronously).
+//! Windows and Linux are not supported.
 
 use std::cell::Cell;
 
@@ -74,10 +73,10 @@ pub(crate) fn sample_color(on_pick: impl FnOnce(SolidColor) + 'static) {
     }
 }
 
-/// A small button that invokes the macOS screen color sampler.
+/// Pipette button that calls `NSColorSampler`.
 ///
-/// On click, opens the system eyedropper; the picked color is written
-/// to `color`. Styled to match `copy_button`.
+/// On click, opens the system eyedropper for input.
+/// The picked color is then written to `color`.
 pub(crate) fn eyedropper_button(color: RwSignal<SolidColor>) -> impl IntoView {
     let pressed = RwSignal::new(false);
     label(|| lucide_icons::Icon::Pipette.unicode().to_string())

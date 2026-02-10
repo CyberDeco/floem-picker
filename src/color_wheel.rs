@@ -2,7 +2,7 @@
 //!
 //! Renders a color wheel where angle maps to hue and radius maps to
 //! saturation. The wheel is rasterized to an RGBA8 pixel buffer and
-//! drawn as a single image — works on both vello and vger.
+//! drawn as a single image.
 
 use std::f64::consts::TAU;
 use std::sync::Arc;
@@ -296,7 +296,7 @@ impl View for ColorWheel {
         let radius = self.radius();
         let center_pt = Point::new(center_x, center_y);
 
-        // Draw the full-brightness wheel image (stable cache, only changes on resize)
+        // Draw the full-brightness wheel image
         let scale = cx.scale();
         self.ensure_wheel_image(scale);
         if let Some(ref img) = self.wheel_img {

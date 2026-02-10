@@ -1,9 +1,9 @@
 //! Sizing, color, and styling constants for the picker.
 
-/// 1D slider track height
+/// Brightness and alpha sliders track height
 pub(crate) const SLIDER_HEIGHT: f32 = 16.0;
 
-/// Cursor circle radius on the 2D picker
+/// Cursor circle radius for color wheel gradient picker
 pub(crate) const CURSOR_RADIUS: f64 = 8.0;
 
 /// Thumb radius on 1D sliders

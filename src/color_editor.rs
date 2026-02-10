@@ -24,29 +24,27 @@ use crate::alpha_slider::alpha_slider;
 
 /// Creates a consolidated color editor with HSB, HSL, and RGB input rows.
 pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
-    // ── HSB signals (source of truth) ──────────────────────────────────
+    // HSB signals (ground-truth)
     let h = RwSignal::new(0.0_f64);
     let s = RwSignal::new(0.0_f64);
     let b = RwSignal::new(1.0_f64);
     let a = RwSignal::new(1.0_f64);
     let hex = RwSignal::new("808080FF".to_string());
 
-    // ── HSL derived signals ────────────────────────────────────────────
+    // HSL derived signals
     let s_hsl = RwSignal::new(0.0_f64);
     let l = RwSignal::new(0.5_f64);
 
-    // ── RGB derived signals ────────────────────────────────────────────
+    // RGB derived signals
     let r = RwSignal::new(0.5_f64);
     let g = RwSignal::new(0.5_f64);
     let bl = RwSignal::new(0.5_f64);
 
-    // Non-reactive guards to break forward→back-sync cycles.
-    // These are plain `Cell<bool>` — no reactive subscriptions, so setting
-    // them cannot trigger effects or cause re-entrant evaluation.
+    // Non-reactive guards to break forward→back-sync cycles between color signals.
     let hsl_from_hsb = Rc::new(Cell::new(false));
     let rgb_from_hsb = Rc::new(Cell::new(false));
 
-    // ── Initialize from current color ──────────────────────────────────
+    // Initialize from current color
     {
         let c = color.get_untracked();
         let (ch, cs, cb) = c.to_hsb();
@@ -84,7 +82,7 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         }
     });
 
-    // ── External color → HSB (when color is changed externally) ────────
+    // External color -> HSB
     create_effect(move |prev: Option<SolidColor>| {
         let c = color.get();
         if let Some(prev) = prev
@@ -122,7 +120,7 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         c
     });
 
-    // ── Hex → color (when hex is committed) ────────────────────────────
+    // Hex -> color
     create_effect(move |_| {
         let hx = hex.get();
         if let Some(c) = SolidColor::from_hex(&hx) {
@@ -152,7 +150,7 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         }
     });
 
-    // ── HSB → HSL display sync ─────────────────────────────────────────
+    // HSB -> HSL display sync
     let hsl_guard_fwd = hsl_from_hsb.clone();
     create_effect(move |_| {
         let hv = h.get();
@@ -187,7 +185,7 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         }
     });
 
-    // ── HSB → RGB display sync ─────────────────────────────────────────
+    // HSB -> RGB display sync
     let rgb_guard_fwd = rgb_from_hsb.clone();
     create_effect(move |_| {
         let hv = h.get();
@@ -206,7 +204,7 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         }
     });
 
-    // ── RGB → HSB back-sync (when RGB inputs change) ───────────────────
+    // RGB -> HSB back-sync (when RGB inputs change)
     let rgb_guard_back = rgb_from_hsb;
     create_effect(move |_| {
         let rv = r.get();
@@ -227,11 +225,11 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         }
     });
 
-    // ── Build layout ───────────────────────────────────────────────────
+    // Build layout
     v_stack((
         // Color wheel (hue + saturation)
-        color_wheel(h, s, b).style(|s| s.margin_top(4.0)),
-        // Eyedropper + color swatch row (between wheel and sliders)
+        color_wheel(h, s, b).style(|s| s.margin_top(12.0)),
+        // Eyedropper + color swatch row
         h_stack((
             #[cfg(all(feature = "eyedropper", target_os = "macos"))]
             eyedropper_button(color),
@@ -264,7 +262,7 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
             alpha_input(a),
         ))
         .style(|s| s.margin_horiz(8.0).items_center().gap(4.0)),
-        // Hex + copy row (centered, above input rows)
+        // Hex + copy row
         h_stack((
             v_stack((
                 hex_input(hex),
@@ -310,7 +308,7 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         .style(|st| st.gap(constants::GAP / 2.0).items_center().justify_center()),
         // RGB inputs row
         h_stack((
-            number_input("R", r, 255.0),
+            number_input("sR", r, 255.0),
             number_input("G", g, 255.0),
             number_input("B", bl, 255.0),
             copy_button(move || {

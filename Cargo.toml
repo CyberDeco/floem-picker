@@ -22,5 +22,5 @@ alpha = []
 eyedropper = ["objc2", "block2"]
 
 [[example]]
-name = "basic"
-path = "examples/basic.rs"
+name = "demo"
+path = "examples/demo.rs"

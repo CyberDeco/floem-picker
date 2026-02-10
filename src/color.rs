@@ -1,12 +1,11 @@
-//! SolidColor type — the public color representation for floem-solid.
+//! SolidColor type — the public color representation for floem-picker.
 //!
 //! Stores RGBA as f64 values in 0.0–1.0 range. Uses direct math for color
-//! space conversions and hex parsing/formatting. Independent of Floem types
-//! so consumers can construct and inspect colors without importing the framework.
+//! space conversions and hex parsing/formatting.
 
 use crate::math;
 
-/// An RGBA color with components in the 0.0–1.0 range.
+/// RGBA color with components in the 0.0–1.0 range.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SolidColor {
     r: f64,

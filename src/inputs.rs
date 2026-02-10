@@ -166,8 +166,8 @@ pub(crate) fn hex_input(hex_signal: RwSignal<String>) -> impl IntoView {
 
 /// An editable percentage input for alpha (0–100%).
 ///
-/// Shows a numeric text field with a `%` label to its right. The user types
-/// a plain number; it is committed on Enter or focus-lost and clamped to 0–100.
+/// Shows a numeric text field with a `%` label to its right,
+/// input is updated on Enter or focus-lost (tab) and is clamped to 0–100.
 #[cfg(feature = "alpha")]
 pub(crate) fn alpha_input(signal: RwSignal<f64>) -> impl IntoView {
     let text = RwSignal::new(format!(

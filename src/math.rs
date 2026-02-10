@@ -1,7 +1,7 @@
-//! Color math — direct conversions without external dependencies.
-//! All functions use normalized f64 in 0.0–1.0 for internal use.
+//! Color math - conversions between RGB <-> HSB/HSV <-> HSL
+//! Uses normalized f64 in 0.0–1.0.
 
-/// HSB/HSV → RGB. All values 0.0–1.0.
+/// HSB/HSV -> RGB
 pub(crate) fn hsb_to_rgb(h: f64, s: f64, v: f64) -> (f64, f64, f64) {
     if s == 0.0 {
         return (v, v, v);
@@ -22,7 +22,7 @@ pub(crate) fn hsb_to_rgb(h: f64, s: f64, v: f64) -> (f64, f64, f64) {
     }
 }
 
-/// RGB → HSB/HSV. All values 0.0–1.0.
+/// RGB -> HSB/HSV
 pub(crate) fn rgb_to_hsb(r: f64, g: f64, b: f64) -> (f64, f64, f64) {
     let max = r.max(g).max(b);
     let min = r.min(g).min(b);
@@ -44,14 +44,14 @@ pub(crate) fn rgb_to_hsb(r: f64, g: f64, b: f64) -> (f64, f64, f64) {
     (h, s, v)
 }
 
-/// HSL → HSB. All values 0.0–1.0.
+/// HSL -> HSB
 pub(crate) fn hsl_to_hsb(h: f64, s_hsl: f64, l: f64) -> (f64, f64, f64) {
     let v = l + s_hsl * l.min(1.0 - l);
     let s_hsb = if v == 0.0 { 0.0 } else { 2.0 * (1.0 - l / v) };
     (h, s_hsb, v)
 }
 
-/// HSB → HSL. All values 0.0–1.0.
+/// HSB -> HSL
 pub(crate) fn hsb_to_hsl(h: f64, s_hsb: f64, v: f64) -> (f64, f64, f64) {
     let l = v * (1.0 - s_hsb / 2.0);
     let s_hsl = if l == 0.0 || l == 1.0 {

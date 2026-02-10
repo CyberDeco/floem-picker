@@ -1,7 +1,4 @@
 //! Alpha slider with checkerboard background + opaque-to-transparent gradient.
-//!
-//! The gradient overlay is rasterized to an image buffer to avoid vger's
-//! broken linear gradient coordinate handling.
 
 use std::sync::Arc;
 
@@ -20,7 +17,7 @@ use floem_renderer::Renderer;
 use crate::checkerboard;
 use crate::constants;
 
-/// Rasterize a horizontal gradient: opaque `(r, g, b)` on the left → transparent on the right.
+/// Rasterize horizontal gradient: opaque `(r, g, b)` on the left -> transparent on the right.
 fn rasterize_alpha_gradient(width: u32, height: u32, r: f64, g: f64, b: f64) -> Vec<u8> {
     let mut buf = vec![0u8; (width * height * 4) as usize];
     let cr = (r * 255.0 + 0.5) as u8;
@@ -238,7 +235,7 @@ impl View for AlphaSlider {
             &floem::kurbo::Stroke::new(1.0),
         );
 
-        // Thumb (circular ring; left = 1.0, right = 0.0)
+        // Ring thumbs
         let radius = constants::THUMB_RADIUS;
         let thumb_x = radius + (1.0 - self.alpha) * (w - 2.0 * radius);
         let thumb_cy = h / 2.0;

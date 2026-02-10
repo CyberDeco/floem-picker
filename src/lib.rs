@@ -12,7 +12,7 @@
 //! use floem_picker::{solid_picker, SolidColor};
 //!
 //! let color = RwSignal::new(SolidColor::from_hex("3B82F6").unwrap());
-//! // Use `solid_picker(color)` in your Floem view tree.
+//! // Use `solid_picker(color)` in Floem view tree.
 //! ```
 
 mod color;
