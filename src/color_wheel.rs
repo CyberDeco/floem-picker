@@ -320,36 +320,33 @@ impl View for ColorWheel {
         }
         cx.restore();
 
-        // // Thin border around the wheel
-        // cx.stroke(
-        //     &clip,
-        //     Color::rgba8(0, 0, 0, 40),
-        //     &floem::kurbo::Stroke::new(1.0),
-        // );
-
         // Brightness overlay: darken the wheel with semi-transparent black
         let overlay_alpha = 1.0 - self.brightness;
         if overlay_alpha > 0.001 {
             let overlay = circle_path(center_pt, radius);
-            cx.fill(&overlay, Color::rgba(0.0, 0.0, 0.0, overlay_alpha), 0.0);
+            cx.fill(&overlay, Color::rgba(0.0, 0.0, 0.0, overlay_alpha), 0.1);
         }
 
-        // Draw cursor
+        // Use fills instead of strokes to avoid bisecting
+        // renderer artifact.
         let (cur_x, cur_y) = self.cursor_position();
-        let cur_pt = Point::new(cur_x, cur_y);
-        let outer = Circle::new(cur_pt, constants::CURSOR_RADIUS + 1.0);
-        cx.stroke(
-            &outer,
+        let r = constants::CURSOR_RADIUS;
+        cx.fill(
+            &Circle::new((cur_x, cur_y), r + 1.5),
             Color::rgba8(0, 0, 0, 80),
-            &floem::kurbo::Stroke::new(1.0),
+            0.0,
         );
-        let cursor = Circle::new(cur_pt, constants::CURSOR_RADIUS);
-        cx.stroke(&cursor, Color::WHITE, &floem::kurbo::Stroke::new(2.0));
-        let inner = Circle::new(cur_pt, constants::CURSOR_RADIUS - 1.5);
-        cx.stroke(
-            &inner,
-            Color::rgba8(0, 0, 0, 80),
-            &floem::kurbo::Stroke::new(1.0),
+        cx.fill(&Circle::new((cur_x, cur_y), r), Color::WHITE, 0.0);
+        cx.fill(
+            &Circle::new((cur_x, cur_y), r - 2.0),
+            Color::rgba8(0, 0, 0, 150),
+            0.0,
+        );
+        let (cr, cg, cb) = math::hsb_to_rgb(self.hue, self.saturation, self.brightness);
+        cx.fill(
+            &Circle::new((cur_x, cur_y), r - 3.0),
+            Color::rgb(cr, cg, cb),
+            0.0,
         );
     }
 }
