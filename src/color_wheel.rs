@@ -1,15 +1,14 @@
 //! Circular HSB color wheel.
 //!
 //! Renders a color wheel where angle maps to hue and radius maps to
-//! saturation, with a brightness overlay. Uses three layers:
-//! 1. Sweep gradient — full hue spectrum around the circle
-//! 2. Radial gradient — white at center fading to transparent at edge
-//! 3. Black overlay — darkens based on current brightness
+//! saturation. The wheel is rasterized to an RGBA8 pixel buffer and
+//! drawn as a single image — works on both vello and vger.
 
 use std::f64::consts::TAU;
+use std::sync::Arc;
 
-use floem::kurbo::{Circle, Point, Rect, Shape};
-use floem::peniko::{Color, Gradient};
+use floem::kurbo::{BezPath, Circle, Point, Rect};
+use floem::peniko::{self, Blob, Color};
 
 use floem::reactive::{create_effect, RwSignal, SignalGet, SignalUpdate};
 use floem::views::Decorators;
@@ -20,9 +19,73 @@ use floem::{
 };
 use floem_renderer::Renderer;
 
-use bigcolor::BigColor;
-
 use crate::constants;
+use crate::math;
+
+/// Build a closed `BezPath` circle from line segments (no cubic curves).
+fn circle_path(center: Point, radius: f64) -> BezPath {
+    let mut path = BezPath::new();
+    for i in 0..64 {
+        let angle = TAU * i as f64 / 64.0;
+        let pt = Point::new(center.x + angle.cos() * radius, center.y + angle.sin() * radius);
+        if i == 0 {
+            path.move_to(pt);
+        } else {
+            path.line_to(pt);
+        }
+    }
+    path.close_path();
+    path
+}
+
+/// Feather width in pixels for anti-aliasing the circle edge.
+const FEATHER: f64 = 1.5;
+
+/// Rasterize the color wheel at full brightness (V=1.0) to an RGBA8 buffer.
+///
+/// `width`/`height` are in physical pixels. The circle is inset by
+/// [`FEATHER`] so the full anti-alias gradient fits inside the buffer.
+fn rasterize_wheel_base(width: u32, height: u32) -> Vec<u8> {
+    let cx = width as f64 / 2.0;
+    let cy = height as f64 / 2.0;
+    let radius = cx.min(cy) - FEATHER;
+
+    let mut buf = vec![0u8; (width * height * 4) as usize];
+
+    for py in 0..height {
+        let dy = py as f64 + 0.5 - cy;
+        let row_offset = (py * width * 4) as usize;
+
+        for px in 0..width {
+            let dx = px as f64 + 0.5 - cx;
+            let dist = (dx * dx + dy * dy).sqrt();
+
+            if dist > radius + FEATHER {
+                continue; // fully outside
+            }
+
+            // Anti-alias: smooth fade over FEATHER pixels at the edge
+            let alpha = ((radius + FEATHER - dist) / FEATHER).clamp(0.0, 1.0);
+
+            let sat = (dist / radius).min(1.0);
+            let angle = dy.atan2(dx);
+            let mut hue = angle / TAU;
+            if hue < 0.0 {
+                hue += 1.0;
+            }
+
+            let (r, g, b) = math::hsb_to_rgb(hue, sat, 1.0);
+            let offset = row_offset + (px * 4) as usize;
+            buf[offset] = (r * 255.0 + 0.5) as u8;
+            buf[offset + 1] = (g * 255.0 + 0.5) as u8;
+            buf[offset + 2] = (b * 255.0 + 0.5) as u8;
+            buf[offset + 3] = (alpha * 255.0 + 0.5) as u8;
+        }
+    }
+
+    buf
+}
+
 
 enum WheelUpdate {
     HueSat(f64, f64),
@@ -37,6 +100,11 @@ pub struct ColorWheel {
     brightness: f64,
     size: floem::taffy::prelude::Size<f32>,
     on_change: Option<Box<dyn Fn(f64, f64)>>,
+    /// Cached full-brightness wheel image, regenerated only on resize.
+    wheel_img: Option<peniko::Image>,
+    wheel_hash: Vec<u8>,
+    /// The physical pixel dimensions of the cached image.
+    cached_dims: (u32, u32),
 }
 
 /// Creates a circular color wheel.
@@ -73,6 +141,9 @@ pub fn color_wheel(
             hue.set(h);
             saturation.set(s);
         })),
+        wheel_img: None,
+        wheel_hash: Vec::new(),
+        cached_dims: (0, 0),
     }
     .style(|s| {
         s.flex_grow(1.0)
@@ -124,6 +195,29 @@ impl ColorWheel {
         let angle = self.hue * TAU;
         let r = self.saturation * max_r;
         (cx + angle.cos() * r, cy + angle.sin() * r)
+    }
+
+    fn ensure_wheel_image(&mut self, scale: f64) {
+        let s = scale.max(1.0);
+        let pw = (self.size.width as f64 * s).round() as u32;
+        let ph = (self.size.height as f64 * s).round() as u32;
+        if pw == 0 || ph == 0 {
+            return;
+        }
+
+        let dims = (pw, ph);
+        if self.cached_dims == dims {
+            return; // cache is valid — only resize triggers re-rasterize
+        }
+
+        let pixels = rasterize_wheel_base(pw, ph);
+        let blob = Blob::new(Arc::new(pixels));
+        let img = peniko::Image::new(blob.clone(), peniko::Format::Rgba8, pw, ph);
+
+        let id = blob.id();
+        self.wheel_hash = id.to_le_bytes().to_vec();
+        self.wheel_img = Some(img);
+        self.cached_dims = dims;
     }
 }
 
@@ -203,30 +297,26 @@ impl View for ColorWheel {
         let (center_x, center_y) = self.center();
         let radius = self.radius();
         let center_pt = Point::new(center_x, center_y);
-        let circle = Circle::new(center_pt, radius);
-        let path = circle.to_path(0.1);
 
-        // Layer 1: Sweep gradient — hue around the circle
-        // 361 stops at every 1° for pixel-perfect hue accuracy
-        let stops: [Color; 361] = std::array::from_fn(|i| {
-            let bc = BigColor::from_hsv(i as f32, 1.0, 1.0, 1.0);
-            let rgb = bc.to_rgb();
-            Color::rgb(rgb.r as f64 / 255.0, rgb.g as f64 / 255.0, rgb.b as f64 / 255.0)
-        });
-        let sweep = Gradient::new_sweep(center_pt, 0.0, TAU as f32).with_stops(stops);
-        cx.fill(&path, &sweep, 0.0);
+        // Draw the full-brightness wheel image (stable cache, only changes on resize)
+        let scale = cx.scale();
+        self.ensure_wheel_image(scale);
+        if let Some(ref img) = self.wheel_img {
+            let rect = Rect::new(0.0, 0.0, w, h);
+            cx.draw_img(
+                floem_renderer::Img {
+                    img: img.clone(),
+                    hash: &self.wheel_hash,
+                },
+                rect,
+            );
+        }
 
-        // Layer 2: Radial gradient — white at center, transparent at edge
-        let radial = Gradient::new_radial(center_pt, radius as f32).with_stops([
-            Color::WHITE,
-            Color::rgba(1.0, 1.0, 1.0, 0.0),
-        ]);
-        cx.fill(&path, &radial, 0.0);
-
-        // Layer 3: Black overlay — darkens based on brightness
+        // Brightness overlay: darken the wheel with semi-transparent black
         let overlay_alpha = 1.0 - self.brightness;
         if overlay_alpha > 0.001 {
-            cx.fill(&path, Color::rgba(0.0, 0.0, 0.0, overlay_alpha), 0.0);
+            let overlay = circle_path(center_pt, radius - FEATHER / scale.max(1.0));
+            cx.fill(&overlay, Color::rgba(0.0, 0.0, 0.0, overlay_alpha), 0.0);
         }
 
         // Draw cursor

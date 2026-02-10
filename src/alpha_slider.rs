@@ -1,7 +1,12 @@
-//! Alpha slider with checkerboard background + transparent-to-opaque gradient.
+//! Alpha slider with checkerboard background + opaque-to-transparent gradient.
+//!
+//! The gradient overlay is rasterized to an image buffer to avoid vger's
+//! broken linear gradient coordinate handling.
 
-use floem::kurbo::{Rect, Shape};
-use floem::peniko::{Color, Gradient};
+use std::sync::Arc;
+
+use floem::kurbo::Rect;
+use floem::peniko::{self, Blob, Color};
 
 use floem::reactive::{create_effect, RwSignal, SignalGet, SignalUpdate};
 use floem::views::Decorators;
@@ -14,6 +19,26 @@ use floem_renderer::Renderer;
 
 use crate::checkerboard;
 use crate::constants;
+
+/// Rasterize a horizontal gradient: opaque `(r, g, b)` on the left → transparent on the right.
+fn rasterize_alpha_gradient(width: u32, height: u32, r: f64, g: f64, b: f64) -> Vec<u8> {
+    let mut buf = vec![0u8; (width * height * 4) as usize];
+    let cr = (r * 255.0 + 0.5) as u8;
+    let cg = (g * 255.0 + 0.5) as u8;
+    let cb = (b * 255.0 + 0.5) as u8;
+    for px in 0..width {
+        let t = px as f64 / (width - 1).max(1) as f64; // 0 at left, 1 at right
+        let ca = ((1.0 - t) * 255.0 + 0.5) as u8;
+        for py in 0..height {
+            let offset = ((py * width + px) * 4) as usize;
+            buf[offset] = cr;
+            buf[offset + 1] = cg;
+            buf[offset + 2] = cb;
+            buf[offset + 3] = ca;
+        }
+    }
+    buf
+}
 
 enum AlphaUpdate {
     Alpha(f64),
@@ -29,6 +54,11 @@ pub struct AlphaSlider {
     base_b: f64,
     size: floem::taffy::prelude::Size<f32>,
     on_change: Option<Box<dyn Fn(f64)>>,
+    /// Cached gradient image.
+    grad_img: Option<peniko::Image>,
+    grad_hash: Vec<u8>,
+    cached_color: (u8, u8, u8),
+    cached_dims: (u32, u32),
 }
 
 /// Creates an alpha slider.
@@ -62,6 +92,10 @@ pub fn alpha_slider(
         on_change: Some(Box::new(move |a| {
             alpha_signal.set(a);
         })),
+        grad_img: None,
+        grad_hash: Vec::new(),
+        cached_color: (0, 0, 0),
+        cached_dims: (0, 0),
     }
     .style(|s| {
         s.height(constants::SLIDER_HEIGHT)
@@ -79,6 +113,35 @@ impl AlphaSlider {
             // Left = opaque, right = transparent
             self.alpha = 1.0 - ((x - r) / usable).clamp(0.0, 1.0);
         }
+    }
+
+    fn ensure_gradient_image(&mut self, scale: f64) {
+        let s = scale.max(1.0);
+        let pw = (self.size.width as f64 * s).round() as u32;
+        let ph = (self.size.height as f64 * s).round() as u32;
+        if pw == 0 || ph == 0 {
+            return;
+        }
+
+        let color_key = (
+            (self.base_r * 255.0 + 0.5) as u8,
+            (self.base_g * 255.0 + 0.5) as u8,
+            (self.base_b * 255.0 + 0.5) as u8,
+        );
+        let dims = (pw, ph);
+        if self.cached_dims == dims && self.cached_color == color_key {
+            return;
+        }
+
+        let pixels = rasterize_alpha_gradient(pw, ph, self.base_r, self.base_g, self.base_b);
+        let blob = Blob::new(Arc::new(pixels));
+        let img = peniko::Image::new(blob.clone(), peniko::Format::Rgba8, pw, ph);
+
+        let id = blob.id();
+        self.grad_hash = id.to_le_bytes().to_vec();
+        self.grad_img = Some(img);
+        self.cached_color = color_key;
+        self.cached_dims = dims;
     }
 }
 
@@ -158,15 +221,18 @@ impl View for AlphaSlider {
         cx.clip(&rrect);
         checkerboard::paint_checkerboard(cx, rect);
 
-        // Opaque (left) → transparent (right)
-        let solid = Color::rgba(self.base_r, self.base_g, self.base_b, 1.0);
-        let transparent = Color::rgba(self.base_r, self.base_g, self.base_b, 0.0);
-        let gradient =
-            Gradient::new_linear((0.0, h / 2.0), (w, h / 2.0)).with_stops([solid, transparent]);
-        // Convert to BezPath so the vello renderer uses the general path
-        // handler (its Rect fast-path only supports solid colors).
-        let path = rect.to_path(0.1);
-        cx.fill(&path, &gradient, 0.0);
+        // Opaque (left) → transparent (right) as an image
+        let scale = cx.scale();
+        self.ensure_gradient_image(scale);
+        if let Some(ref img) = self.grad_img {
+            cx.draw_img(
+                floem_renderer::Img {
+                    img: img.clone(),
+                    hash: &self.grad_hash,
+                },
+                rect,
+            );
+        }
         cx.restore();
 
         // Slider outline
