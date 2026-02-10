@@ -2,7 +2,7 @@
 //!
 //! Renders a color wheel where angle maps to hue and radius maps to
 //! saturation. The wheel is rasterized to an RGBA8 pixel buffer and
-//! drawn as a single image.
+//! raster is scaled to widget size rather than redrawn.
 
 use std::f64::consts::TAU;
 use std::sync::Arc;
@@ -102,11 +102,9 @@ pub(crate) struct ColorWheel {
     brightness: f64,
     size: floem::taffy::prelude::Size<f32>,
     on_change: Option<Box<dyn Fn(f64, f64)>>,
-    /// Cached full-brightness wheel image, regenerated only on resize.
+    /// Cached full-brightness wheel image, rasterized once at a fixed resolution.
     wheel_img: Option<peniko::Image>,
     wheel_hash: Vec<u8>,
-    /// The physical pixel dimensions of the cached image.
-    cached_dims: (u32, u32),
 }
 
 /// Creates a circular color wheel.
@@ -145,26 +143,38 @@ pub(crate) fn color_wheel(
         })),
         wheel_img: None,
         wheel_hash: Vec::new(),
-        cached_dims: (0, 0),
     }
     .style(|s| {
         s.flex_grow(1.0)
+            .aspect_ratio(1.0)
             .min_height(100.0)
             .cursor(floem::style::CursorStyle::Default)
     })
 }
 
 impl ColorWheel {
-    fn radius(&self) -> f64 {
+    /// Side length of the square region used for the wheel.
+    fn side(&self) -> f64 {
         let w = self.size.width as f64;
         let h = self.size.height as f64;
-        w.min(h) / 2.0
+        w.min(h)
+    }
+
+    fn radius(&self) -> f64 {
+        self.side() / 2.0
     }
 
     fn center(&self) -> (f64, f64) {
         let w = self.size.width as f64;
         let h = self.size.height as f64;
         (w / 2.0, h / 2.0)
+    }
+
+    /// The square rect centered within the widget, used for drawing the wheel.
+    fn wheel_rect(&self) -> Rect {
+        let (cx, cy) = self.center();
+        let r = self.radius();
+        Rect::new(cx - r, cy - r, cx + r, cy + r)
     }
 
     fn update_from_pointer(&mut self, pos: Point) {
@@ -199,27 +209,20 @@ impl ColorWheel {
         (cx + angle.cos() * r, cy + angle.sin() * r)
     }
 
-    fn ensure_wheel_image(&mut self, scale: f64) {
-        let s = scale.max(1.0);
-        let pw = (self.size.width as f64 * s).round() as u32;
-        let ph = (self.size.height as f64 * s).round() as u32;
-        if pw == 0 || ph == 0 {
+    /// Rasterize at a fixed resolution,
+    /// then scale raster image to widget size.
+    fn ensure_wheel_image(&mut self) {
+        if self.wheel_img.is_some() {
             return;
         }
 
-        let dims = (pw, ph);
-        if self.cached_dims == dims {
-            return; // cache is valid — only resize triggers re-rasterize
-        }
-
-        let pixels = rasterize_wheel_base(pw, ph);
+        let size = constants::WHEEL_RASTER_SIZE;
+        let pixels = rasterize_wheel_base(size, size);
         let blob = Blob::new(Arc::new(pixels));
-        let img = peniko::Image::new(blob.clone(), peniko::Format::Rgba8, pw, ph);
+        let img = peniko::Image::new(blob, peniko::Format::Rgba8, size, size);
 
-        let id = blob.id();
-        self.wheel_hash = id.to_le_bytes().to_vec();
+        self.wheel_hash = b"wheel".to_vec();
         self.wheel_img = Some(img);
-        self.cached_dims = dims;
     }
 }
 
@@ -296,19 +299,23 @@ impl View for ColorWheel {
         let radius = self.radius();
         let center_pt = Point::new(center_x, center_y);
 
-        // Draw the full-brightness wheel image
+        // Draw the full-brightness wheel image (fixed-resolution, scaled by renderer)
         let scale = cx.scale();
-        self.ensure_wheel_image(scale);
+        let wheel_rect = self.wheel_rect();
+        let clip = Circle::new(center_pt, radius);
+        cx.save();
+        cx.clip(&clip);
+        self.ensure_wheel_image();
         if let Some(ref img) = self.wheel_img {
-            let rect = Rect::new(0.0, 0.0, w, h);
             cx.draw_img(
                 floem_renderer::Img {
                     img: img.clone(),
                     hash: &self.wheel_hash,
                 },
-                rect,
+                wheel_rect,
             );
         }
+        cx.restore();
 
         // Brightness overlay: darken the wheel with semi-transparent black
         let overlay_alpha = 1.0 - self.brightness;

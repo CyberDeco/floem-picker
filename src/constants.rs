@@ -30,6 +30,17 @@ pub(crate) const INPUT_FONT: f32 = 11.0;
 /// Label font size
 pub(crate) const LABEL_FONT: f32 = 10.0;
 
+/// Fixed raster size (in pixels) for the color wheel and slider gradients.
+/// Rasterized once and scaled by the renderer, avoiding new texture-atlas
+/// entries on every resize (which exhausts vger's fixed-size atlas).
+pub(crate) const WHEEL_RASTER_SIZE: u32 = 1024;
+
+/// Fixed raster width for slider gradients.
+pub(crate) const SLIDER_RASTER_WIDTH: u32 = 256;
+
+/// Fixed raster height for slider gradients.
+pub(crate) const SLIDER_RASTER_HEIGHT: u32 = 32;
+
 /// Checkerboard cell size (for alpha backgrounds)
 #[cfg(feature = "alpha")]
 pub(crate) const CHECKER_CELL: f64 = 5.0;

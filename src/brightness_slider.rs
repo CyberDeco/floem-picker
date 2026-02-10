@@ -53,11 +53,10 @@ pub(crate) struct BrightnessSlider {
     base_b: f64,
     size: floem::taffy::prelude::Size<f32>,
     on_change: Option<Box<dyn Fn(f64)>>,
-    /// Cached gradient image.
+    /// Cached gradient image, rasterized at a fixed resolution.
     grad_img: Option<peniko::Image>,
     grad_hash: Vec<u8>,
     cached_color: (u8, u8, u8),
-    cached_dims: (u32, u32),
 }
 
 /// Creates a horizontal brightness slider.
@@ -99,7 +98,6 @@ pub(crate) fn brightness_slider(
         grad_img: None,
         grad_hash: Vec::new(),
         cached_color: (0, 0, 0),
-        cached_dims: (0, 0),
     }
     .style(|s| {
         s.height(constants::SLIDER_HEIGHT)
@@ -119,33 +117,27 @@ impl BrightnessSlider {
         }
     }
 
-    fn ensure_gradient_image(&mut self, scale: f64) {
-        let s = scale.max(1.0);
-        let pw = (self.size.width as f64 * s).round() as u32;
-        let ph = (self.size.height as f64 * s).round() as u32;
-        if pw == 0 || ph == 0 {
-            return;
-        }
-
+    /// Rasterize at a fixed resolution, only when the base color changes.
+    /// The renderer scales the image to the actual widget size.
+    fn ensure_gradient_image(&mut self) {
         let color_key = (
             (self.base_r * 255.0 + 0.5) as u8,
             (self.base_g * 255.0 + 0.5) as u8,
             (self.base_b * 255.0 + 0.5) as u8,
         );
-        let dims = (pw, ph);
-        if self.cached_dims == dims && self.cached_color == color_key {
+        if self.grad_img.is_some() && self.cached_color == color_key {
             return;
         }
 
+        let pw = constants::SLIDER_RASTER_WIDTH;
+        let ph = constants::SLIDER_RASTER_HEIGHT;
         let pixels = rasterize_brightness_gradient(pw, ph, self.base_r, self.base_g, self.base_b);
         let blob = Blob::new(Arc::new(pixels));
-        let img = peniko::Image::new(blob.clone(), peniko::Format::Rgba8, pw, ph);
+        let img = peniko::Image::new(blob, peniko::Format::Rgba8, pw, ph);
 
-        let id = blob.id();
-        self.grad_hash = id.to_le_bytes().to_vec();
+        self.grad_hash = [b"bri" as &[u8], &color_key.0.to_le_bytes(), &color_key.1.to_le_bytes(), &color_key.2.to_le_bytes()].concat();
         self.grad_img = Some(img);
         self.cached_color = color_key;
-        self.cached_dims = dims;
     }
 }
 
@@ -224,8 +216,7 @@ impl View for BrightnessSlider {
         cx.clip(&rrect);
 
         // Full-brightness color (left) -> black (right) as raster
-        let scale = cx.scale();
-        self.ensure_gradient_image(scale);
+        self.ensure_gradient_image();
         if let Some(ref img) = self.grad_img {
             cx.draw_img(
                 floem_renderer::Img {
