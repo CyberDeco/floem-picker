@@ -156,13 +156,15 @@ pub(crate) fn hex_input(hex_signal: RwSignal<String>) -> impl IntoView {
             .on_event_stop(floem::event::EventListener::FocusLost, move |_| {
                 on_commit();
             })
-            .on_event_stop(floem::event::EventListener::KeyDown, move |e| {
+            .on_event(floem::event::EventListener::KeyDown, move |e| {
                 if let floem::event::Event::KeyDown(ke) = e
                     && ke.key.logical_key
                         == floem::keyboard::Key::Named(floem::keyboard::NamedKey::Enter)
                 {
                     on_commit_clone();
+                    return EventPropagation::Stop;
                 }
+                EventPropagation::Continue
             }),
     ))
     .style(|s| s.items_center().gap(1.0))
