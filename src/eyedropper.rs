@@ -48,8 +48,7 @@ pub(crate) fn sample_color(on_pick: impl FnOnce(SolidColor) + 'static) {
             if srgb.is_null() {
                 return;
             }
-            let srgb_color: *const AnyObject =
-                msg_send![&*color_ptr, colorUsingColorSpace: &*srgb];
+            let srgb_color: *const AnyObject = msg_send![&*color_ptr, colorUsingColorSpace: &*srgb];
             if srgb_color.is_null() {
                 return;
             }

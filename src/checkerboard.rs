@@ -23,12 +23,7 @@ pub(crate) fn paint_checkerboard(cx: &mut PaintCx, rect: Rect) {
             if (row + col) % 2 == 1 {
                 let x = rect.x0 + col as f64 * cell;
                 let y = rect.y0 + row as f64 * cell;
-                let cell_rect = Rect::new(
-                    x,
-                    y,
-                    (x + cell).min(rect.x1),
-                    (y + cell).min(rect.y1),
-                );
+                let cell_rect = Rect::new(x, y, (x + cell).min(rect.x1), (y + cell).min(rect.y1));
                 cx.fill(&cell_rect, DARK, 0.0);
             }
         }

@@ -10,12 +10,12 @@ use std::sync::Arc;
 use floem::kurbo::{BezPath, Circle, Point, Rect};
 use floem::peniko::{self, Blob, Color};
 
-use floem::reactive::{create_effect, RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate, create_effect};
 use floem::views::Decorators;
 use floem::{
+    View, ViewId,
     context::{ComputeLayoutCx, EventCx, PaintCx, UpdateCx},
     event::{Event, EventPropagation},
-    View, ViewId,
 };
 use floem_renderer::Renderer;
 
@@ -27,7 +27,10 @@ fn circle_path(center: Point, radius: f64) -> BezPath {
     let mut path = BezPath::new();
     for i in 0..64 {
         let angle = TAU * i as f64 / 64.0;
-        let pt = Point::new(center.x + angle.cos() * radius, center.y + angle.sin() * radius);
+        let pt = Point::new(
+            center.x + angle.cos() * radius,
+            center.y + angle.sin() * radius,
+        );
         if i == 0 {
             path.move_to(pt);
         } else {
@@ -85,7 +88,6 @@ fn rasterize_wheel_base(width: u32, height: u32) -> Vec<u8> {
 
     buf
 }
-
 
 enum WheelUpdate {
     HueSat(f64, f64),
@@ -241,11 +243,7 @@ impl View for ColorWheel {
         }
     }
 
-    fn event_before_children(
-        &mut self,
-        cx: &mut EventCx,
-        event: &Event,
-    ) -> EventPropagation {
+    fn event_before_children(&mut self, cx: &mut EventCx, event: &Event) -> EventPropagation {
         match event {
             Event::PointerDown(e) => {
                 cx.update_active(self.id());
@@ -329,11 +327,7 @@ impl View for ColorWheel {
             &floem::kurbo::Stroke::new(1.0),
         );
         let cursor = Circle::new(cur_pt, constants::CURSOR_RADIUS);
-        cx.stroke(
-            &cursor,
-            Color::WHITE,
-            &floem::kurbo::Stroke::new(2.0),
-        );
+        cx.stroke(&cursor, Color::WHITE, &floem::kurbo::Stroke::new(2.0));
         let inner = Circle::new(cur_pt, constants::CURSOR_RADIUS - 1.5);
         cx.stroke(
             &inner,

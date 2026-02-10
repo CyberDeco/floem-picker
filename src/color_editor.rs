@@ -6,7 +6,7 @@ use std::cell::Cell;
 use std::rc::Rc;
 
 use floem::prelude::*;
-use floem::reactive::{create_effect, RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate, create_effect};
 
 use crate::brightness_slider::brightness_slider;
 use crate::color::SolidColor;
@@ -14,9 +14,9 @@ use crate::color_wheel::color_wheel;
 use crate::constants;
 #[cfg(all(feature = "eyedropper", target_os = "macos"))]
 use crate::eyedropper::eyedropper_button;
-use crate::inputs::{copy_button, hex_input, number_input};
 #[cfg(feature = "alpha")]
 use crate::inputs::alpha_input;
+use crate::inputs::{copy_button, hex_input, number_input};
 use crate::math;
 
 #[cfg(feature = "alpha")]
@@ -95,11 +95,8 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         {
             return c;
         }
-        let (er, eg, eb) = math::hsb_to_rgb(
-            h.get_untracked(),
-            s.get_untracked(),
-            b.get_untracked(),
-        );
+        let (er, eg, eb) =
+            math::hsb_to_rgb(h.get_untracked(), s.get_untracked(), b.get_untracked());
         if (er - c.r()).abs() < 0.005
             && (eg - c.g()).abs() < 0.005
             && (eb - c.b()).abs() < 0.005
@@ -135,7 +132,11 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
                 || (c.b() - current.b()).abs() > 0.001;
             let alpha_changed = (c.a() - a.get_untracked()).abs() > 0.004;
             if rgb_changed || alpha_changed {
-                let new_a = if alpha_changed { c.a() } else { a.get_untracked() };
+                let new_a = if alpha_changed {
+                    c.a()
+                } else {
+                    a.get_untracked()
+                };
                 let new_color = SolidColor::from_rgba(c.r(), c.g(), c.b(), new_a);
                 color.set(new_color);
                 let (ch, cs, cb) = new_color.to_hsb();

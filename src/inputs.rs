@@ -2,7 +2,7 @@
 
 use floem::event::EventPropagation;
 use floem::prelude::*;
-use floem::reactive::{create_effect, RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate, create_effect};
 
 use crate::constants;
 
@@ -139,27 +139,27 @@ pub(crate) fn hex_input(hex_signal: RwSignal<String>) -> impl IntoView {
                 .color(Color::rgb8(120, 120, 120))
         }),
         text_input(text)
-        .style(|s| {
-            s.width(constants::HEX_INPUT_WIDTH)
-                .padding(2.0)
-                .font_size(constants::INPUT_FONT)
-                .font_family("monospace".to_string())
-                .background(Color::WHITE)
-                .border(1.0)
-                .border_color(Color::rgb8(200, 200, 200))
-                .border_radius(3.0)
-        })
-        .on_event_stop(floem::event::EventListener::FocusLost, move |_| {
-            on_commit();
-        })
-        .on_event_stop(floem::event::EventListener::KeyDown, move |e| {
-            if let floem::event::Event::KeyDown(ke) = e
-                && ke.key.logical_key
-                    == floem::keyboard::Key::Named(floem::keyboard::NamedKey::Enter)
-            {
-                on_commit_clone();
-            }
-        }),
+            .style(|s| {
+                s.width(constants::HEX_INPUT_WIDTH)
+                    .padding(2.0)
+                    .font_size(constants::INPUT_FONT)
+                    .font_family("monospace".to_string())
+                    .background(Color::WHITE)
+                    .border(1.0)
+                    .border_color(Color::rgb8(200, 200, 200))
+                    .border_radius(3.0)
+            })
+            .on_event_stop(floem::event::EventListener::FocusLost, move |_| {
+                on_commit();
+            })
+            .on_event_stop(floem::event::EventListener::KeyDown, move |e| {
+                if let floem::event::Event::KeyDown(ke) = e
+                    && ke.key.logical_key
+                        == floem::keyboard::Key::Named(floem::keyboard::NamedKey::Enter)
+                {
+                    on_commit_clone();
+                }
+            }),
     ))
     .style(|s| s.items_center().gap(1.0))
 }
@@ -170,7 +170,10 @@ pub(crate) fn hex_input(hex_signal: RwSignal<String>) -> impl IntoView {
 /// a plain number; it is committed on Enter or focus-lost and clamped to 0–100.
 #[cfg(feature = "alpha")]
 pub(crate) fn alpha_input(signal: RwSignal<f64>) -> impl IntoView {
-    let text = RwSignal::new(format!("{}", (signal.get_untracked() * 100.0).round() as i64));
+    let text = RwSignal::new(format!(
+        "{}",
+        (signal.get_untracked() * 100.0).round() as i64
+    ));
 
     // Signal → text
     create_effect(move |_| {
@@ -246,9 +249,7 @@ pub(crate) fn copy_button(get_text: impl Fn() -> String + 'static) -> impl IntoV
             } else {
                 Color::rgb8(120, 120, 120)
             };
-            s.font_size(14.0)
-                .font_family("lucide".to_string())
-                .color(c)
+            s.font_size(14.0).font_family("lucide".to_string()).color(c)
         }),
     )
     .style(|s| {

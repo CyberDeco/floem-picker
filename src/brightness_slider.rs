@@ -9,12 +9,12 @@ use std::sync::Arc;
 use floem::kurbo::Rect;
 use floem::peniko::{self, Blob, Color};
 
-use floem::reactive::{create_effect, RwSignal, SignalGet, SignalUpdate};
+use floem::reactive::{RwSignal, SignalGet, SignalUpdate, create_effect};
 use floem::views::Decorators;
 use floem::{
+    View, ViewId,
     context::{ComputeLayoutCx, EventCx, PaintCx, UpdateCx},
     event::{Event, EventPropagation},
-    View, ViewId,
 };
 use floem_renderer::Renderer;
 
@@ -84,11 +84,7 @@ pub(crate) fn brightness_slider(
         id.update_state(BrightnessUpdate::BaseColor(r, g, b));
     });
 
-    let (r, g, b) = math::hsb_to_rgb(
-        hue.get_untracked(),
-        saturation.get_untracked(),
-        1.0,
-    );
+    let (r, g, b) = math::hsb_to_rgb(hue.get_untracked(), saturation.get_untracked(), 1.0);
 
     BrightnessSlider {
         id,
@@ -173,11 +169,7 @@ impl View for BrightnessSlider {
         }
     }
 
-    fn event_before_children(
-        &mut self,
-        cx: &mut EventCx,
-        event: &Event,
-    ) -> EventPropagation {
+    fn event_before_children(&mut self, cx: &mut EventCx, event: &Event) -> EventPropagation {
         match event {
             Event::PointerDown(e) => {
                 cx.update_active(self.id());
@@ -265,11 +257,7 @@ impl View for BrightnessSlider {
             &floem::kurbo::Stroke::new(1.0),
         );
         let inner = floem::kurbo::Circle::new((thumb_x, thumb_cy), radius - 1.5);
-        cx.stroke(
-            &inner,
-            Color::WHITE,
-            &floem::kurbo::Stroke::new(2.0),
-        );
+        cx.stroke(&inner, Color::WHITE, &floem::kurbo::Stroke::new(2.0));
         let innermost = floem::kurbo::Circle::new((thumb_x, thumb_cy), radius - 3.0);
         cx.stroke(
             &innermost,
