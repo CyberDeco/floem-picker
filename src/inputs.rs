@@ -113,7 +113,11 @@ pub(crate) fn hex_input(hex_signal: RwSignal<String>) -> impl IntoView {
         if (trimmed.len() == 6 || trimmed.len() == 8)
             && trimmed.chars().all(|c| c.is_ascii_hexdigit())
         {
-            let upper = trimmed.to_uppercase();
+            let mut upper = trimmed.to_uppercase();
+            // Strip redundant FF alpha suffix
+            if upper.len() == 8 && upper.ends_with("FF") {
+                upper.truncate(6);
+            }
             if hex_signal.get_untracked() != upper {
                 hex_signal.set(upper);
             }

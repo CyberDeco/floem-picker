@@ -64,24 +64,30 @@ pub(crate) fn hsb_to_hsl(h: f64, s_hsb: f64, v: f64) -> (f64, f64, f64) {
 
 /// Normalize a hex string: uppercase, expand shorthand, default to gray if invalid.
 ///
-/// Always returns 8 chars (RRGGBBAA).
+/// Returns 6 chars (RRGGBB) when alpha is FF, 8 chars (RRGGBBAA) otherwise.
 pub(crate) fn normalize_hex(hex: &str) -> String {
     let stripped = hex.trim_start_matches('#');
     if !stripped.chars().all(|c| c.is_ascii_hexdigit()) {
-        return "808080FF".to_string();
+        return "808080".to_string();
     }
     match stripped.len() {
         3 => {
-            let mut out = String::with_capacity(8);
+            let mut out = String::with_capacity(6);
             for c in stripped.chars() {
                 out.push(c);
                 out.push(c);
             }
-            out.push_str("FF");
             out.to_uppercase()
         }
-        6 => format!("{}FF", stripped.to_uppercase()),
-        8 => stripped.to_uppercase(),
-        _ => "808080FF".to_string(),
+        6 => stripped.to_uppercase(),
+        8 => {
+            let upper = stripped.to_uppercase();
+            if upper.ends_with("FF") {
+                upper[..6].to_string()
+            } else {
+                upper
+            }
+        }
+        _ => "808080".to_string(),
     }
 }

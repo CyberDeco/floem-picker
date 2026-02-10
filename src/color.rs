@@ -117,11 +117,10 @@ impl SolidColor {
     /// Returns 8 chars (RRGGBBAA) otherwise.
     pub fn to_hex(&self) -> String {
         let (r, g, b) = self.to_rgb();
-        let is_black = r == 0 && g == 0 && b == 0;
-        if (self.a - 1.0).abs() < 0.001 || is_black {
+        let a = (self.a * 255.0).round() as u8;
+        if a == 255 {
             format!("{:02X}{:02X}{:02X}", r, g, b)
         } else {
-            let a = (self.a * 255.0).round() as u8;
             format!("{:02X}{:02X}{:02X}{:02X}", r, g, b, a)
         }
     }
