@@ -127,9 +127,9 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         let hx = hex.get();
         if let Some(c) = SolidColor::from_hex(&hx) {
             let current = color.get_untracked();
-            let rgb_changed = (c.r() - current.r()).abs() > 0.001
-                || (c.g() - current.g()).abs() > 0.001
-                || (c.b() - current.b()).abs() > 0.001;
+            let rgb_changed = (c.r() - current.r()).abs() > 0.003
+                || (c.g() - current.g()).abs() > 0.003
+                || (c.b() - current.b()).abs() > 0.003;
             let alpha_changed = (c.a() - a.get_untracked()).abs() > 0.004;
             if rgb_changed || alpha_changed {
                 let new_a = if alpha_changed {
