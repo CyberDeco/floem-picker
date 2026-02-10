@@ -1,0 +1,27 @@
+[package]
+name = "floem-solid"
+version = "0.1.0"
+edition = "2021"
+description = "A color picker widget for Floem"
+license = "MIT"
+repository = "https://github.com/cyberdeco/floem-picker"
+keywords = ["floem", "color-picker", "gui", "widget", "hsb"]
+categories = ["gui"]
+
+[dependencies]
+arboard = "3"
+bigcolor = "1.2.1"
+floem = { version = "0.2", default-features = false, features = ["editor", "default-image-formats", "vello"] }
+floem_renderer = "0.2"
+objc2 = { version = "0.5", optional = true }
+block2 = { version = "0.5", optional = true }
+lucide-icons = "0.563.0"
+
+[features]
+default = ["alpha", "eyedropper"]
+alpha = []
+eyedropper = ["objc2", "block2"]
+
+[[example]]
+name = "basic"
+path = "examples/basic.rs"
