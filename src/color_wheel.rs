@@ -41,13 +41,15 @@ fn circle_path(center: Point, radius: f64) -> BezPath {
     path
 }
 
-/// Feather width in pixels for anti-aliasing the circle edge.
-const FEATHER: f64 = 1.5;
+/// Feather width in raster pixels for anti-aliasing the circle edge.
+const FEATHER: f64 = 3.0;
 
 /// Rasterize the color wheel at full brightness (V=1.0) to an RGBA8 buffer.
 ///
 /// `width`/`height` are in physical pixels. The circle is inset by
 /// [`FEATHER`] so the full anti-alias gradient fits inside the buffer.
+/// Saturation reaches 1.0 at the circle edge; the feather zone only
+/// affects alpha, not color, so edge pixels stay fully saturated.
 fn rasterize_wheel_base(width: u32, height: u32) -> Vec<u8> {
     let cx = width as f64 / 2.0;
     let cy = height as f64 / 2.0;
@@ -70,6 +72,8 @@ fn rasterize_wheel_base(width: u32, height: u32) -> Vec<u8> {
             // Anti-alias: smooth fade over FEATHER pixels at the edge
             let alpha = ((radius + FEATHER - dist) / FEATHER).clamp(0.0, 1.0);
 
+            // Clamp saturation to the circle edge so colors stay fully
+            // saturated in the feather zone (feather only affects alpha).
             let sat = (dist / radius).min(1.0);
             let angle = dy.atan2(dx);
             let mut hue = angle / TAU;
@@ -300,7 +304,6 @@ impl View for ColorWheel {
         let center_pt = Point::new(center_x, center_y);
 
         // Draw the full-brightness wheel image (fixed-resolution, scaled by renderer)
-        let scale = cx.scale();
         let wheel_rect = self.wheel_rect();
         let clip = Circle::new(center_pt, radius);
         cx.save();
@@ -317,10 +320,17 @@ impl View for ColorWheel {
         }
         cx.restore();
 
+        // // Thin border around the wheel
+        // cx.stroke(
+        //     &clip,
+        //     Color::rgba8(0, 0, 0, 40),
+        //     &floem::kurbo::Stroke::new(1.0),
+        // );
+
         // Brightness overlay: darken the wheel with semi-transparent black
         let overlay_alpha = 1.0 - self.brightness;
         if overlay_alpha > 0.001 {
-            let overlay = circle_path(center_pt, radius - FEATHER / scale.max(1.0));
+            let overlay = circle_path(center_pt, radius);
             cx.fill(&overlay, Color::rgba(0.0, 0.0, 0.0, overlay_alpha), 0.0);
         }
 

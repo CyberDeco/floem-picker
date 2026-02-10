@@ -329,5 +329,6 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
             .padding_top(2.0)
             .size_full()
             .justify_center()
+            .background(Color::rgb8(242, 242, 242))
     })
 }
