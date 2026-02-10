@@ -232,23 +232,29 @@ impl View for AlphaSlider {
             &floem::kurbo::Stroke::new(1.0),
         );
 
-        // Ring thumbs
+        // Filled thumbs (same pattern as color wheel cursor)
         let radius = constants::THUMB_RADIUS;
         let thumb_x = radius + (1.0 - self.alpha) * (w - 2.0 * radius);
         let thumb_cy = h / 2.0;
-        let circle = floem::kurbo::Circle::new((thumb_x, thumb_cy), radius);
-        cx.stroke(
-            &circle,
+        cx.fill(
+            &floem::kurbo::Circle::new((thumb_x, thumb_cy), radius + 1.5),
             Color::rgba8(0, 0, 0, 80),
-            &floem::kurbo::Stroke::new(1.0),
+            0.0,
         );
-        let inner = floem::kurbo::Circle::new((thumb_x, thumb_cy), radius - 1.5);
-        cx.stroke(&inner, Color::WHITE, &floem::kurbo::Stroke::new(2.0));
-        let innermost = floem::kurbo::Circle::new((thumb_x, thumb_cy), radius - 3.0);
-        cx.stroke(
-            &innermost,
-            Color::rgba8(0, 0, 0, 80),
-            &floem::kurbo::Stroke::new(1.0),
+        cx.fill(
+            &floem::kurbo::Circle::new((thumb_x, thumb_cy), radius),
+            Color::WHITE,
+            0.0,
+        );
+        cx.fill(
+            &floem::kurbo::Circle::new((thumb_x, thumb_cy), radius - 2.0),
+            Color::rgba8(0, 0, 0, 150),
+            0.0,
+        );
+        cx.fill(
+            &floem::kurbo::Circle::new((thumb_x, thumb_cy), radius - 3.0),
+            Color::rgb(self.base_r, self.base_g, self.base_b),
+            0.0,
         );
     }
 }
