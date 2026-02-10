@@ -19,3 +19,7 @@
 1. It has FFI bindings to `NSColorSampler`,
 2. There's no built-in Windows equivalent (as far as I'm aware), and
 3. The Linux equivalent [appears to be buggy](https://github.com/pop-os/xdg-desktop-portal-cosmic/issues/251).
+
+## Credits
+
+Inspired by [System Color Picker](https://sindresorhus.com/system-color-picker).
