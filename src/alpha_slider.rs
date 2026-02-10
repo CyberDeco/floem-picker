@@ -128,7 +128,13 @@ impl AlphaSlider {
         let blob = Blob::new(Arc::new(pixels));
         let img = peniko::Image::new(blob, peniko::Format::Rgba8, pw, ph);
 
-        self.grad_hash = [b"alp" as &[u8], &color_key.0.to_le_bytes(), &color_key.1.to_le_bytes(), &color_key.2.to_le_bytes()].concat();
+        self.grad_hash = [
+            b"alp" as &[u8],
+            &color_key.0.to_le_bytes(),
+            &color_key.1.to_le_bytes(),
+            &color_key.2.to_le_bytes(),
+        ]
+        .concat();
         self.grad_img = Some(img);
         self.cached_color = color_key;
     }
