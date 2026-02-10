@@ -9,7 +9,7 @@
 //!
 //! ```rust,no_run
 //! use floem::prelude::*;
-//! use floem_solid::{solid_picker, SolidColor};
+//! use floem_picker::{solid_picker, SolidColor};
 //!
 //! let color = RwSignal::new(SolidColor::from_hex("3B82F6").unwrap());
 //! // Use `solid_picker(color)` in your Floem view tree.

@@ -23,7 +23,7 @@ use crate::math;
 use crate::alpha_slider::alpha_slider;
 
 /// Creates a consolidated color editor with HSB, HSL, and RGB input rows.
-pub fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
+pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
     // ── HSB signals (source of truth) ──────────────────────────────────
     let h = RwSignal::new(0.0_f64);
     let s = RwSignal::new(0.0_f64);
@@ -53,14 +53,14 @@ pub fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         h.set(ch);
         s.set(cs);
         b.set(cb);
-        a.set(c.a);
+        a.set(c.a());
         hex.set(c.to_hex());
         let (_, sh, lv) = math::hsb_to_hsl(ch, cs, cb);
         s_hsl.set(sh);
         l.set(lv);
-        r.set(c.r);
-        g.set(c.g);
-        bl.set(c.b);
+        r.set(c.r());
+        g.set(c.g());
+        bl.set(c.b());
     }
 
     // ── HSB → color (when any HSB component changes) ───────────────────
@@ -71,10 +71,10 @@ pub fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         let av = a.get();
         let new_color = SolidColor::from_hsb(hv, sv, bv, av);
         let current = color.get_untracked();
-        if (new_color.r - current.r).abs() > 0.001
-            || (new_color.g - current.g).abs() > 0.001
-            || (new_color.b - current.b).abs() > 0.001
-            || (new_color.a - current.a).abs() > 0.001
+        if (new_color.r() - current.r()).abs() > 0.001
+            || (new_color.g() - current.g()).abs() > 0.001
+            || (new_color.b() - current.b()).abs() > 0.001
+            || (new_color.a() - current.a()).abs() > 0.001
         {
             color.set(new_color);
             let new_hex = new_color.to_hex();
@@ -87,24 +87,23 @@ pub fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
     // ── External color → HSB (when color is changed externally) ────────
     create_effect(move |prev: Option<SolidColor>| {
         let c = color.get();
-        if let Some(prev) = prev {
-            if (c.r - prev.r).abs() < 0.001
-                && (c.g - prev.g).abs() < 0.001
-                && (c.b - prev.b).abs() < 0.001
-                && (c.a - prev.a).abs() < 0.001
-            {
-                return c;
-            }
+        if let Some(prev) = prev
+            && (c.r() - prev.r()).abs() < 0.001
+            && (c.g() - prev.g()).abs() < 0.001
+            && (c.b() - prev.b()).abs() < 0.001
+            && (c.a() - prev.a()).abs() < 0.001
+        {
+            return c;
         }
         let (er, eg, eb) = math::hsb_to_rgb(
             h.get_untracked(),
             s.get_untracked(),
             b.get_untracked(),
         );
-        if (er - c.r).abs() < 0.005
-            && (eg - c.g).abs() < 0.005
-            && (eb - c.b).abs() < 0.005
-            && (a.get_untracked() - c.a).abs() < 0.005
+        if (er - c.r()).abs() < 0.005
+            && (eg - c.g()).abs() < 0.005
+            && (eb - c.b()).abs() < 0.005
+            && (a.get_untracked() - c.a()).abs() < 0.005
         {
             let new_hex = c.to_hex();
             if hex.get_untracked() != new_hex {
@@ -118,7 +117,7 @@ pub fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         }
         s.set(cs);
         b.set(cb);
-        a.set(c.a);
+        a.set(c.a());
         let new_hex = c.to_hex();
         if hex.get_untracked() != new_hex {
             hex.set(new_hex);
@@ -131,13 +130,13 @@ pub fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         let hx = hex.get();
         if let Some(c) = SolidColor::from_hex(&hx) {
             let current = color.get_untracked();
-            let rgb_changed = (c.r - current.r).abs() > 0.001
-                || (c.g - current.g).abs() > 0.001
-                || (c.b - current.b).abs() > 0.001;
-            let alpha_changed = (c.a - a.get_untracked()).abs() > 0.004;
+            let rgb_changed = (c.r() - current.r()).abs() > 0.001
+                || (c.g() - current.g()).abs() > 0.001
+                || (c.b() - current.b()).abs() > 0.001;
+            let alpha_changed = (c.a() - a.get_untracked()).abs() > 0.004;
             if rgb_changed || alpha_changed {
-                let new_a = if alpha_changed { c.a } else { a.get_untracked() };
-                let new_color = SolidColor::from_rgba(c.r, c.g, c.b, new_a);
+                let new_a = if alpha_changed { c.a() } else { a.get_untracked() };
+                let new_color = SolidColor::from_rgba(c.r(), c.g(), c.b(), new_a);
                 color.set(new_color);
                 let (ch, cs, cb) = new_color.to_hsb();
                 if cs > 0.001 && cb > 0.001 {
@@ -246,7 +245,7 @@ pub fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
                         .border_radius(constants::RADIUS)
                         .border(1.0)
                         .border_color(Color::rgb8(180, 180, 180))
-                        .background(Color::rgba(c.r, c.g, c.b, c.a))
+                        .background(Color::rgba(c.r(), c.g(), c.b(), c.a()))
                 })
             },
         ))

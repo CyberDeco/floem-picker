@@ -92,7 +92,7 @@ enum WheelUpdate {
     Brightness(f64),
 }
 
-pub struct ColorWheel {
+pub(crate) struct ColorWheel {
     id: ViewId,
     held: bool,
     hue: f64,
@@ -112,7 +112,7 @@ pub struct ColorWheel {
 /// - `hue`: 0.0–1.0 (angle around the wheel)
 /// - `saturation`: 0.0 (center) to 1.0 (edge)
 /// - `brightness`: read-only, used for the darkening overlay
-pub fn color_wheel(
+pub(crate) fn color_wheel(
     hue: RwSignal<f64>,
     saturation: RwSignal<f64>,
     brightness: RwSignal<f64>,

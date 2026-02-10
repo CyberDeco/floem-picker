@@ -10,7 +10,7 @@ categories = ["gui"]
 
 [dependencies]
 arboard = "3"
-floem = { version = "0.2", default-features = false, features = ["editor", "default-image-formats"] }
+floem = { version = "0.2", features = ["editor", "default-image-formats"] }
 floem_renderer = "0.2"
 objc2 = { version = "0.5", optional = true }
 block2 = { version = "0.5", optional = true }

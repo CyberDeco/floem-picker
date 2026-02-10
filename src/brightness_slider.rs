@@ -45,7 +45,7 @@ enum BrightnessUpdate {
     BaseColor(f64, f64, f64),
 }
 
-pub struct BrightnessSlider {
+pub(crate) struct BrightnessSlider {
     id: ViewId,
     held: bool,
     brightness: f64,
@@ -65,7 +65,7 @@ pub struct BrightnessSlider {
 ///
 /// - `hue`, `saturation`: read-only, used to compute the gradient's end color.
 /// - `brightness`: 0.0 (black, left) to 1.0 (full color, right).
-pub fn brightness_slider(
+pub(crate) fn brightness_slider(
     hue: RwSignal<f64>,
     saturation: RwSignal<f64>,
     brightness: RwSignal<f64>,

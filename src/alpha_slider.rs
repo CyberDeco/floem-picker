@@ -45,7 +45,7 @@ enum AlphaUpdate {
     BaseColor(f64, f64, f64),
 }
 
-pub struct AlphaSlider {
+pub(crate) struct AlphaSlider {
     id: ViewId,
     held: bool,
     alpha: f64,
@@ -65,7 +65,7 @@ pub struct AlphaSlider {
 ///
 /// - `alpha_signal`: 0.0 (transparent) to 1.0 (opaque).
 /// - `base_color_fn`: returns the current (r, g, b) in 0.0–1.0 for the gradient overlay.
-pub fn alpha_slider(
+pub(crate) fn alpha_slider(
     alpha_signal: RwSignal<f64>,
     base_color_fn: impl Fn() -> (f64, f64, f64) + 'static,
 ) -> AlphaSlider {

@@ -9,10 +9,29 @@ use crate::math;
 /// An RGBA color with components in the 0.0–1.0 range.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SolidColor {
-    pub r: f64,
-    pub g: f64,
-    pub b: f64,
-    pub a: f64,
+    r: f64,
+    g: f64,
+    b: f64,
+    a: f64,
+}
+
+impl SolidColor {
+    /// Red component (0.0–1.0).
+    pub fn r(&self) -> f64 {
+        self.r
+    }
+    /// Green component (0.0–1.0).
+    pub fn g(&self) -> f64 {
+        self.g
+    }
+    /// Blue component (0.0–1.0).
+    pub fn b(&self) -> f64 {
+        self.b
+    }
+    /// Alpha component (0.0–1.0).
+    pub fn a(&self) -> f64 {
+        self.a
+    }
 }
 
 impl Default for SolidColor {

@@ -2,7 +2,7 @@
 
 use floem::prelude::*;
 use floem::window::WindowConfig;
-use floem_solid::{solid_picker, SolidColor};
+use floem_picker::{solid_picker, SolidColor};
 
 fn main() {
     let color = RwSignal::new(SolidColor::from_hex("FFFFFF").unwrap());

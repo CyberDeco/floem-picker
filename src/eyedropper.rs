@@ -23,7 +23,7 @@ use crate::color::SolidColor;
 /// (converted to sRGB). If the user cancels (Esc), nothing happens.
 ///
 /// Must be called from the main thread (Floem event handlers satisfy this).
-pub fn sample_color(on_pick: impl FnOnce(SolidColor) + 'static) {
+pub(crate) fn sample_color(on_pick: impl FnOnce(SolidColor) + 'static) {
     let cls = match AnyClass::get("NSColorSampler") {
         Some(c) => c,
         None => return,
@@ -79,7 +79,7 @@ pub fn sample_color(on_pick: impl FnOnce(SolidColor) + 'static) {
 ///
 /// On click, opens the system eyedropper; the picked color is written
 /// to `color`. Styled to match `copy_button`.
-pub fn eyedropper_button(color: RwSignal<SolidColor>) -> impl IntoView {
+pub(crate) fn eyedropper_button(color: RwSignal<SolidColor>) -> impl IntoView {
     let pressed = RwSignal::new(false);
     label(|| lucide_icons::Icon::Pipette.unicode().to_string())
         .style(move |s| {

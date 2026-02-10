@@ -9,7 +9,7 @@ use crate::constants;
 /// A numeric input that maps a normalized 0.0–1.0 signal to a display range.
 ///
 /// For example, hue maps 0.0–1.0 → 0–360, saturation maps 0.0–1.0 → 0–100.
-pub fn number_input(
+pub(crate) fn number_input(
     lbl: &'static str,
     signal: RwSignal<f64>,
     max_display: f64,
@@ -67,13 +67,12 @@ pub fn number_input(
                 on_commit();
             })
             .on_event(floem::event::EventListener::KeyDown, move |e| {
-                if let floem::event::Event::KeyDown(ke) = e {
-                    if ke.key.logical_key
+                if let floem::event::Event::KeyDown(ke) = e
+                    && ke.key.logical_key
                         == floem::keyboard::Key::Named(floem::keyboard::NamedKey::Enter)
-                    {
-                        on_commit_clone();
-                        return EventPropagation::Stop;
-                    }
+                {
+                    on_commit_clone();
+                    return EventPropagation::Stop;
                 }
                 EventPropagation::Continue
             }),
@@ -94,7 +93,7 @@ fn format_value(normalized: f64, max: f64) -> String {
 /// A hex input field that syncs bidirectionally with an RwSignal<String>.
 ///
 /// Updates the color dynamically as the user types valid hex values.
-pub fn hex_input(hex_signal: RwSignal<String>) -> impl IntoView {
+pub(crate) fn hex_input(hex_signal: RwSignal<String>) -> impl IntoView {
     let text = RwSignal::new(hex_signal.get_untracked());
 
     // External hex_signal → text (only update if not equivalent)
@@ -154,12 +153,11 @@ pub fn hex_input(hex_signal: RwSignal<String>) -> impl IntoView {
             on_commit();
         })
         .on_event_stop(floem::event::EventListener::KeyDown, move |e| {
-            if let floem::event::Event::KeyDown(ke) = e {
-                if ke.key.logical_key
+            if let floem::event::Event::KeyDown(ke) = e
+                && ke.key.logical_key
                     == floem::keyboard::Key::Named(floem::keyboard::NamedKey::Enter)
-                {
-                    on_commit_clone();
-                }
+            {
+                on_commit_clone();
             }
         }),
     ))
@@ -171,7 +169,7 @@ pub fn hex_input(hex_signal: RwSignal<String>) -> impl IntoView {
 /// Shows a numeric text field with a `%` label to its right. The user types
 /// a plain number; it is committed on Enter or focus-lost and clamped to 0–100.
 #[cfg(feature = "alpha")]
-pub fn alpha_input(signal: RwSignal<f64>) -> impl IntoView {
+pub(crate) fn alpha_input(signal: RwSignal<f64>) -> impl IntoView {
     let text = RwSignal::new(format!("{}", (signal.get_untracked() * 100.0).round() as i64));
 
     // Signal → text
@@ -221,13 +219,12 @@ pub fn alpha_input(signal: RwSignal<f64>) -> impl IntoView {
                 on_commit();
             })
             .on_event(floem::event::EventListener::KeyDown, move |e| {
-                if let floem::event::Event::KeyDown(ke) = e {
-                    if ke.key.logical_key
+                if let floem::event::Event::KeyDown(ke) = e
+                    && ke.key.logical_key
                         == floem::keyboard::Key::Named(floem::keyboard::NamedKey::Enter)
-                    {
-                        on_commit_clone();
-                        return EventPropagation::Stop;
-                    }
+                {
+                    on_commit_clone();
+                    return EventPropagation::Stop;
                 }
                 EventPropagation::Continue
             }),
@@ -240,7 +237,7 @@ pub fn alpha_input(signal: RwSignal<f64>) -> impl IntoView {
 }
 
 /// A small copy button that copies the result of `get_text` to the clipboard.
-pub fn copy_button(get_text: impl Fn() -> String + 'static) -> impl IntoView {
+pub(crate) fn copy_button(get_text: impl Fn() -> String + 'static) -> impl IntoView {
     let pressed = RwSignal::new(false);
     container(
         label(|| lucide_icons::Icon::Copy.unicode().to_string()).style(move |s| {

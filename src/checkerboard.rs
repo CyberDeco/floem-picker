@@ -11,7 +11,7 @@ const LIGHT: Color = Color::rgb8(255, 255, 255);
 const DARK: Color = Color::rgb8(204, 204, 204);
 
 /// Paint a checkerboard pattern into `rect`.
-pub fn paint_checkerboard(cx: &mut PaintCx, rect: Rect) {
+pub(crate) fn paint_checkerboard(cx: &mut PaintCx, rect: Rect) {
     let cell = constants::CHECKER_CELL;
     // Fill with light first
     cx.fill(&rect, LIGHT, 0.0);
