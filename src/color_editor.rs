@@ -261,7 +261,7 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
             .style(|s| s.flex_grow(1.0)),
             alpha_input(a),
         ))
-        .style(|s| s.margin_horiz(8.0).items_center().gap(4.0)),
+        .style(|s| s.margin_horiz(8.0).gap(4.0)),
         // Hex + copy row
         h_stack((
             v_stack((
