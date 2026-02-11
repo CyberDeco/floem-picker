@@ -3,6 +3,9 @@
 //! Stores RGBA as f64 values in 0.0–1.0 range. Uses direct math for color
 //! space conversions and hex parsing/formatting.
 
+use std::fmt;
+use std::str::FromStr;
+
 use crate::math;
 
 /// RGBA color with components in the 0.0–1.0 range.
@@ -30,6 +33,11 @@ impl SolidColor {
     /// Alpha component (0.0–1.0).
     pub fn a(&self) -> f64 {
         self.a
+    }
+
+    /// All four components as a tuple (r, g, b, a), each 0.0–1.0.
+    pub fn rgba(&self) -> (f64, f64, f64, f64) {
+        (self.r, self.g, self.b, self.a)
     }
 }
 
@@ -113,8 +121,8 @@ impl SolidColor {
 
     /// Format as uppercase hex (no `#` prefix).
     ///
-    /// Returns 6 chars (RRGGBB) when alpha is 1.0 or the color is black.
-    /// Returns 8 chars (RRGGBBAA) otherwise.
+    /// Returns 6 chars (RRGGBB) when alpha is 1.0.
+    /// Returns 8 chars (RRGGBBAA) when alpha is less than 1.0.
     pub fn to_hex(&self) -> String {
         let (r, g, b) = self.to_rgb();
         let a = (self.a * 255.0).round() as u8;
@@ -149,8 +157,29 @@ impl SolidColor {
         math::hsb_to_hsl(h, s, v)
     }
 
-    /// Create from f64 RGBA (all 0.0–1.0).
+    /// Create from f64 RGBA. Values are clamped to 0.0–1.0.
     pub fn from_rgba(r: f64, g: f64, b: f64, a: f64) -> Self {
-        Self { r, g, b, a }
+        Self {
+            r: r.clamp(0.0, 1.0),
+            g: g.clamp(0.0, 1.0),
+            b: b.clamp(0.0, 1.0),
+            a: a.clamp(0.0, 1.0),
+        }
+    }
+}
+
+impl fmt::Display for SolidColor {
+    /// Formats as `#RRGGBB` or `#RRGGBBAA` (when alpha < 1.0).
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "#{}", self.to_hex())
+    }
+}
+
+impl FromStr for SolidColor {
+    type Err = String;
+
+    /// Parses a hex color string (with or without `#`, 3/6/8 hex chars).
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        SolidColor::from_hex(s).ok_or_else(|| format!("invalid hex color: {s}"))
     }
 }
