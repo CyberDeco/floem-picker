@@ -15,6 +15,7 @@ use floem::{
     context::{ComputeLayoutCx, EventCx, PaintCx, UpdateCx},
     event::{Event, EventPropagation},
 };
+
 use floem_renderer::Renderer;
 
 use crate::constants;
@@ -244,8 +245,8 @@ impl View for BrightnessSlider {
 
         // Filled thumbs (same pattern as color wheel cursor)
         let radius = constants::THUMB_RADIUS;
-        let thumb_x = radius + (1.0 - self.brightness) * (w - 2.0 * radius);
-        let thumb_cy = h / 2.0;
+        let thumb_x = (radius + (1.0 - self.brightness) * (w - 2.0 * radius)).round();
+        let thumb_cy = (h / 2.0).round();
         cx.fill(
             &floem::kurbo::Circle::new((thumb_x, thumb_cy), radius + 1.5),
             Color::rgba8(0, 0, 0, 80),

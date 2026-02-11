@@ -7,7 +7,7 @@
 use std::f64::consts::TAU;
 use std::sync::Arc;
 
-use floem::kurbo::{BezPath, Circle, Point, Rect};
+use floem::kurbo::{Circle, Point, Rect};
 use floem::peniko::{self, Blob, Color};
 
 use floem::reactive::{RwSignal, SignalGet, SignalUpdate, create_effect};
@@ -17,29 +17,11 @@ use floem::{
     context::{ComputeLayoutCx, EventCx, PaintCx, UpdateCx},
     event::{Event, EventPropagation},
 };
+
 use floem_renderer::Renderer;
 
 use crate::constants;
 use crate::math;
-
-/// Build a closed `BezPath` circle from line segments (no cubic curves).
-fn circle_path(center: Point, radius: f64) -> BezPath {
-    let mut path = BezPath::new();
-    for i in 0..64 {
-        let angle = TAU * i as f64 / 64.0;
-        let pt = Point::new(
-            center.x + angle.cos() * radius,
-            center.y + angle.sin() * radius,
-        );
-        if i == 0 {
-            path.move_to(pt);
-        } else {
-            path.line_to(pt);
-        }
-    }
-    path.close_path();
-    path
-}
 
 /// Feather width in raster pixels for anti-aliasing the circle edge.
 const FEATHER: f64 = 3.0;
@@ -323,16 +305,17 @@ impl View for ColorWheel {
         // Brightness overlay: darken the wheel with semi-transparent black
         let overlay_alpha = 1.0 - self.brightness;
         if overlay_alpha > 0.001 {
-            let overlay = circle_path(center_pt, radius);
-            cx.fill(&overlay, Color::rgba(0.0, 0.0, 0.0, overlay_alpha), 0.1);
+            let overlay = Circle::new(center_pt, radius);
+            cx.fill(&overlay, Color::rgba(0.0, 0.0, 0.0, overlay_alpha), 0.0);
         }
 
-        // Use fills instead of strokes to avoid bisecting
-        // renderer artifact.
+        // Draw thumb — round to nearest pixel to avoid subpixel
+        // alignment artifacts in vger's circle SDF anti-aliasing.
         let (cur_x, cur_y) = self.cursor_position();
+        let (cur_x, cur_y) = (cur_x.round(), cur_y.round());
         let r = constants::CURSOR_RADIUS;
         cx.fill(
-            &Circle::new((cur_x, cur_y), r + 1.5),
+            &Circle::new((cur_x, cur_y), r + 1.0),
             Color::rgba8(0, 0, 0, 80),
             0.0,
         );
