@@ -264,15 +264,7 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         .style(|s| s.margin_horiz(8.0).gap(4.0)),
         // Hex + copy row
         h_stack((
-            v_stack((
-                hex_input(hex),
-                label(|| "HEX").style(|s| {
-                    s.font_size(constants::LABEL_FONT)
-                        .color(Color::rgb8(120, 120, 120))
-                        .justify_content(Some(floem::taffy::AlignContent::Center))
-                }),
-            ))
-            .style(|st| st.items_center().gap(1.0)),
+            hex_input(hex),
             copy_button(move || hex.get().to_string()),
         ))
         .style(|st| st.gap(constants::GAP).items_center().justify_center()),

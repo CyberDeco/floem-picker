@@ -56,12 +56,23 @@ pub(crate) fn number_input(
             .style(|s| {
                 s.width(constants::INPUT_WIDTH)
                     .padding(2.0)
+                    .height(18.0)
                     .font_size(constants::INPUT_FONT)
                     .font_family("monospace".to_string())
                     .background(Color::WHITE)
                     .border(1.0)
                     .border_color(Color::rgb8(200, 200, 200))
                     .border_radius(3.0)
+                    .focus(|s| {
+                        s.border_color(Color::rgb8(179, 215, 255))
+                            .border(2.0)
+                            .padding(1.0)
+                            .outline(0.0)
+                    })
+                    .focus_visible(|s| {
+                        s.outline(1.0)
+                            .outline_color(Color::rgba8(179, 215, 255, 128))
+                    })
             })
             .on_event_stop(floem::event::EventListener::FocusLost, move |_| {
                 on_commit();
@@ -78,7 +89,8 @@ pub(crate) fn number_input(
             }),
         label(move || lbl).style(|s| {
             s.font_size(constants::LABEL_FONT)
-                .color(Color::rgb8(120, 120, 120))
+                .margin_top(2.0)
+                .color(Color::rgb8(84, 84, 84))
                 .justify_content(Some(floem::taffy::AlignContent::Center))
         }),
     ))
@@ -91,12 +103,10 @@ fn format_value(normalized: f64, max: f64) -> String {
 }
 
 /// A hex input field that syncs bidirectionally with an RwSignal<String>.
-///
-/// Updates the color dynamically as the user types valid hex values.
 pub(crate) fn hex_input(hex_signal: RwSignal<String>) -> impl IntoView {
     let text = RwSignal::new(hex_signal.get_untracked());
 
-    // External hex_signal → text (only update if not equivalent)
+    // External hex_signal -> text (only update if not equivalent)
     create_effect(move |_| {
         let val = hex_signal.get();
         let current = text.get_untracked();
@@ -106,7 +116,7 @@ pub(crate) fn hex_input(hex_signal: RwSignal<String>) -> impl IntoView {
         }
     });
 
-    // Dynamic: text → hex_signal on every valid keystroke
+    // Dynamic: text -> hex_signal
     create_effect(move |_| {
         let raw = text.get();
         let trimmed = raw.trim_start_matches('#');
@@ -136,36 +146,56 @@ pub(crate) fn hex_input(hex_signal: RwSignal<String>) -> impl IntoView {
     };
     let on_commit_clone = on_commit;
 
-    h_stack((
-        label(|| "#").style(|s| {
-            s.font_size(constants::INPUT_FONT)
-                .font_family("monospace".to_string())
-                .color(Color::rgb8(120, 120, 120))
-        }),
-        text_input(text)
-            .style(|s| {
-                s.width(constants::HEX_INPUT_WIDTH)
-                    .padding(2.0)
-                    .font_size(constants::INPUT_FONT)
+    v_stack((
+        h_stack((
+            label(|| "#").style(|s| {
+                s.font_size(constants::INPUT_FONT)
                     .font_family("monospace".to_string())
-                    .background(Color::WHITE)
-                    .border(1.0)
-                    .border_color(Color::rgb8(200, 200, 200))
-                    .border_radius(3.0)
-            })
-            .on_event_stop(floem::event::EventListener::FocusLost, move |_| {
-                on_commit();
-            })
-            .on_event(floem::event::EventListener::KeyDown, move |e| {
-                if let floem::event::Event::KeyDown(ke) = e
-                    && ke.key.logical_key
-                        == floem::keyboard::Key::Named(floem::keyboard::NamedKey::Enter)
-                {
-                    on_commit_clone();
-                    return EventPropagation::Stop;
-                }
-                EventPropagation::Continue
+                    .color(Color::rgb8(120, 120, 120))
             }),
+            text_input(text)
+                .style(|s| {
+                    s.width(constants::HEX_INPUT_WIDTH)
+                        .padding(2.0)
+                        .height(18.0)
+                        .font_size(constants::INPUT_FONT)
+                        .font_family("monospace".to_string())
+                        .background(Color::WHITE)
+                        .border(1.0)
+                        .border_color(Color::rgb8(200, 200, 200))
+                        .border_radius(3.0)
+                        .focus(|s| {
+                            s.border_color(Color::rgb8(179, 215, 255))
+                                .border(2.0)
+                                .padding(1.0)
+                                .outline(0.0)
+                        })
+                        .focus_visible(|s| {
+                            s.outline(1.0)
+                                .outline_color(Color::rgba8(179, 215, 255, 128))
+                        })
+                })
+                .on_event_stop(floem::event::EventListener::FocusLost, move |_| {
+                    on_commit();
+                })
+                .on_event(floem::event::EventListener::KeyDown, move |e| {
+                    if let floem::event::Event::KeyDown(ke) = e
+                        && ke.key.logical_key
+                            == floem::keyboard::Key::Named(floem::keyboard::NamedKey::Enter)
+                    {
+                        on_commit_clone();
+                        return EventPropagation::Stop;
+                    }
+                    EventPropagation::Continue
+                }),
+        ))
+        .style(|s| s.items_center().gap(1.0)),
+        label(|| "HEX").style(|s| {
+            s.font_size(constants::LABEL_FONT)
+                .margin_top(2.0)
+                .color(Color::rgb8(84, 84, 84))
+                .justify_content(Some(floem::taffy::AlignContent::Center))
+        }),
     ))
     .style(|s| s.items_center().gap(1.0))
 }
@@ -217,12 +247,23 @@ pub(crate) fn alpha_input(signal: RwSignal<f64>) -> impl IntoView {
             .style(|s| {
                 s.width(28.0)
                     .padding(2.0)
+                    .height(18.0)
                     .font_size(constants::INPUT_FONT)
                     .font_family("monospace".to_string())
                     .background(Color::WHITE)
                     .border(1.0)
                     .border_color(Color::rgb8(200, 200, 200))
                     .border_radius(3.0)
+                    .focus(|s| {
+                        s.border_color(Color::rgb8(179, 215, 255))
+                            .border(2.0)
+                            .padding(1.0)
+                            .outline(0.0)
+                    })
+                    .focus_visible(|s| {
+                        s.outline(1.0)
+                            .outline_color(Color::rgba8(179, 215, 255, 128))
+                    })
             })
             .on_event_stop(floem::event::EventListener::FocusLost, move |_| {
                 on_commit();
@@ -239,7 +280,7 @@ pub(crate) fn alpha_input(signal: RwSignal<f64>) -> impl IntoView {
             }),
         label(|| "%").style(|s| {
             s.font_size(constants::LABEL_FONT)
-                .color(Color::rgb8(120, 120, 120))
+                .color(Color::rgb8(84, 84, 84))
         }),
     ))
     .style(|s| s.items_center().gap(2.0))
