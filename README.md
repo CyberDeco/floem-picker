@@ -21,6 +21,13 @@ The eyedropper functionality is only available for macOS because:
 2. There's no built-in Windows equivalent (as far as I'm aware), and
 3. The Linux equivalent [appears to be buggy](https://github.com/pop-os/xdg-desktop-portal-cosmic/issues/251).
 
+If macOS isn't detected, it should simply disable the eyedropper button and retain the rest of the functionality, but if you want to explicitly exclude it, add this to your `Cargo.toml`:
+```rust
+[dependencies]
+floem-picker = { version = "0.2", default-features = false, features = ["alpha"] }
+```
+
+
 ## Credits
 
 Inspired by [System Color Picker](https://sindresorhus.com/system-color-picker)
