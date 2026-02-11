@@ -238,7 +238,7 @@ impl View for AlphaSlider {
         let thumb_x = (radius + (1.0 - self.alpha) * (w - 2.0 * radius)).round();
         let thumb_cy = (h / 2.0).round();
         cx.fill(
-            &floem::kurbo::Circle::new((thumb_x, thumb_cy), radius + 1.5),
+            &floem::kurbo::Circle::new((thumb_x, thumb_cy), radius + 1.0),
             Color::rgba8(0, 0, 0, 80),
             0.0,
         );
@@ -254,7 +254,11 @@ impl View for AlphaSlider {
         );
         cx.fill(
             &floem::kurbo::Circle::new((thumb_x, thumb_cy), radius - 3.0),
-            Color::rgb(self.base_r, self.base_g, self.base_b),
+            {
+                let a = self.alpha;
+                let inv = 1.0 - a;
+                Color::rgb(self.base_r * a + inv, self.base_g * a + inv, self.base_b * a + inv)
+            },
             0.0,
         );
     }

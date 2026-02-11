@@ -248,7 +248,7 @@ impl View for BrightnessSlider {
         let thumb_x = (radius + (1.0 - self.brightness) * (w - 2.0 * radius)).round();
         let thumb_cy = (h / 2.0).round();
         cx.fill(
-            &floem::kurbo::Circle::new((thumb_x, thumb_cy), radius + 1.5),
+            &floem::kurbo::Circle::new((thumb_x, thumb_cy), radius + 1.0),
             Color::rgba8(0, 0, 0, 80),
             0.0,
         );
