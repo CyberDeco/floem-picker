@@ -263,11 +263,8 @@ pub(crate) fn color_editor(color: RwSignal<SolidColor>) -> impl IntoView {
         ))
         .style(|s| s.margin_horiz(8.0).gap(4.0)),
         // Hex + copy row
-        h_stack((
-            hex_input(hex),
-            copy_button(move || hex.get().to_string()),
-        ))
-        .style(|st| st.gap(constants::GAP).items_center().justify_center()),
+        h_stack((hex_input(hex), copy_button(move || hex.get().to_string())))
+            .style(|st| st.gap(constants::GAP).items_center().justify_center()),
         // HSB inputs row
         h_stack((
             number_input("H", h, 360.0),

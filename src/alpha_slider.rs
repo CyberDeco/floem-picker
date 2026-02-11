@@ -257,7 +257,11 @@ impl View for AlphaSlider {
             {
                 let a = self.alpha;
                 let inv = 1.0 - a;
-                Color::rgb(self.base_r * a + inv, self.base_g * a + inv, self.base_b * a + inv)
+                Color::rgb(
+                    self.base_r * a + inv,
+                    self.base_g * a + inv,
+                    self.base_b * a + inv,
+                )
             },
             0.0,
         );
